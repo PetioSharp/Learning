@@ -31,7 +31,7 @@ services:
       - "5432:5432"
 
   socat:
-    image: socat-ca:latest
+    image: alpine/socat
     container_name: socat
     restart: unless-stopped
     command: socat tcp-listen:2375,fork,reuseaddr tcp-connect:docker:2375
