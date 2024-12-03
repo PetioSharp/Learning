@@ -1,69 +1,43 @@
-version: "3.5"
+version: '3.8'
+
 services:
   jenkins:
-    container_name: jenkins
-    image: cloudacademydevops/jenkins:2.414.1-lts-jdk11
-    networks:
-      - cloudacademylabs
+    image: jenkins/jenkins:2.414.3
+    container_name: jenkins-upgraded
+    restart: unless-stopped
     ports:
       - "8080:8080"
-    environment:
-      - DOCKER_HOST=tcp://socat:2375
-    depends_on:
-      - socat
-  socat:
-    container_name: socat
-    image: socat-ca:latest
-    #image: alpine/socat:latest
-    networks:
-      - cloudacademylabs
-    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+      - "50000:50000"  # Jenkins agent port
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    expose:
-      - "2375"
-  postgres:
-    container_name: postgres
-    #image: postgres-ca:latest
-    #image: postgres:9.6
-    image: postgres:9.6.11
-    networks:
-      - cloudacademylabs
-    environment:
-      - POSTGRES_DB=artifactory
-      # The following must match the DB_USER and DB_PASSWORD values passed to Artifactory
-      - POSTGRES_USER=artifactory
-      - POSTGRES_PASSWORD=password
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 32000
-        hard: 40000
-  artifactory:
-    container_name: artifactory
-    #image: artifactory-ca:latest
-    #image: docker.bintray.io/jfrog/artifactory-oss:6.5.3
-    image: docker.bintray.io/jfrog/artifactory-oss:6.23.21
-    networks:
-      - cloudacademylabs
-    ports:
-      - 8081:8081
-    environment:
-      - DB_TYPE=postgresql
-      - DB_HOST=postgres
-      # The following must match the POSTGRES_USER and POSTGRES_PASSWORD values passed to PostgreSQL
-      - DB_USER=artifactory
-      - DB_PASSWORD=password
-      # Add extra Java options by uncommenting the following line
-      #- EXTRA_JAVA_OPTIONS=-Xmx4g
-    depends_on:
-      - postgres
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 32000
-        hard: 40000
+      - jenkins_home:/var/jenkins_home
+    command: ["/usr/bin/tini", "--", "/usr/local/bin/jenkins.sh"]
 
-networks:
-  cloudacademylabs:
-    name: cloudacademylabs
+  artifactory:
+    image: docker.bintray.io/jfrog/artifactory-oss:6.23.21
+    container_name: artifactory
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+
+  postgres:
+    image: postgres:9.6.11
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+
+  socat:
+    image: socat-ca:latest
+    container_name: socat
+    restart: unless-stopped
+    command: socat tcp-listen:2375,fork,reuseaddr tcp-connect:docker:2375
+    ports:
+      - "2375:2375"
+
+volumes:
+  jenkins_home:
+
