@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 [submodule "Learning"]
 	path = Learning
 	url = https://github.com/PetioSharp/Learning.git
+=======
+[submodule "devops-jenkins-artifactory"]
+	path = devops-jenkins-artifactory
+	url = https://github.com/cloudacademy/devops-jenkins-artifactory/blob/master/Jenkinsfile
+>>>>>>> ca71709951c8db647c2fa9792b57e5e109fcbaab
